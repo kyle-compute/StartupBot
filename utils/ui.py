@@ -59,14 +59,18 @@ class DifficultyVotingView(discord.ui.View):
             )
             
             total_adjustment = sum(vote['vote_adjustment'] for vote in votes)
-            final_difficulty = max(100, min(2000, self.base_difficulty + total_adjustment))
             vote_count = len(votes)
-            
+
+            # Average the adjustments, including the creator's vote (which has a 0 adjustment)
+            # Total participants = vote_count + 1
+            average_adjustment = total_adjustment / (vote_count + 1)
+            final_difficulty = max(100, min(2000, round(self.base_difficulty + average_adjustment)))
+
             # Update embed with current voting status
             embed = discord.Embed(title="⚖️ Difficulty Voting", color=0x9b59b6)
             embed.add_field(name="Challenge ID", value=self.challenge_id, inline=True)
             embed.add_field(name="Base Difficulty", value=f"{self.base_difficulty} ELO", inline=True)
-            embed.add_field(name="Current Adjustment", value=f"{total_adjustment:+d} ELO", inline=True)
+            embed.add_field(name="Avg. Adjustment", value=f"{average_adjustment:+.2f} ELO", inline=True)
             embed.add_field(name="Projected Final", value=f"{final_difficulty} ELO", inline=True)
             embed.add_field(name="Total Votes", value=str(vote_count), inline=True)
             embed.add_field(name="Status", value="🗳️ Voting in progress", inline=True)
@@ -88,7 +92,14 @@ class DifficultyVotingView(discord.ui.View):
             )
             
             total_adjustment = sum(vote['vote_adjustment'] for vote in votes) if votes else 0
-            final_difficulty = max(100, min(2000, self.base_difficulty + total_adjustment))
+            vote_count = len(votes)
+
+            if vote_count > 0:
+                average_adjustment = total_adjustment / (vote_count + 1)
+                final_difficulty = max(100, min(2000, round(self.base_difficulty + average_adjustment)))
+            else:
+                average_adjustment = 0
+                final_difficulty = self.base_difficulty
             
             # Update challenge status
             await conn.execute(
@@ -100,7 +111,7 @@ class DifficultyVotingView(discord.ui.View):
             embed = discord.Embed(title="✅ Difficulty Voting Finalized", color=0x27ae60)
             embed.add_field(name="Challenge ID", value=self.challenge_id, inline=True)
             embed.add_field(name="Base Difficulty", value=f"{self.base_difficulty} ELO", inline=True)
-            embed.add_field(name="Final Adjustment", value=f"{total_adjustment:+d} ELO", inline=True)
+            embed.add_field(name="Final Adjustment", value=f"{average_adjustment:+.2f} ELO (Avg)", inline=True)
             embed.add_field(name="Final Difficulty", value=f"{final_difficulty} ELO", inline=True)
             embed.add_field(name="Total Votes", value=str(len(votes)), inline=True)
             embed.add_field(name="Status", value="🎯 Challenge now active!", inline=True)

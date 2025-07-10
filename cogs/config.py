@@ -7,12 +7,9 @@ class ConfigCog(commands.Cog, name="Config"):
         self.bot = bot
 
     @commands.command(name='config')
+    @commands.has_permissions(administrator=True)
     async def guild_config(self, ctx, action: str = None, key: str = None, value: str = None):
         """Configure guild settings (Admin only)"""
-        if not ctx.author.guild_permissions.administrator:
-            await ctx.send("❌ Administrator permissions required")
-            return
-        
         if action == "set" and key and value:
             valid_keys = ['k_factor_new', 'k_factor_stable', 'approvals_needed', 'sprint_duration_days', 'stable_user_threshold']
             

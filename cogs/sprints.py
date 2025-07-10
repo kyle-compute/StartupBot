@@ -15,12 +15,9 @@ class SprintsCog(commands.Cog, name="Sprints"):
         self.auto_sprint_management.cancel()
 
     @commands.command(name='sprint')
+    @commands.has_permissions(administrator=True)
     async def sprint_management(self, ctx, action: str = None):
         """Manage sprint cycles (Admin only)"""
-        if not ctx.author.guild_permissions.administrator:
-            await ctx.send("❌ Administrator permissions required")
-            return
-        
         if action == "start":
             config = await db_manager.get_guild_config(ctx.guild.id)
             sprint_id = await db_manager.create_sprint(ctx.guild.id, config['sprint_duration_days'])

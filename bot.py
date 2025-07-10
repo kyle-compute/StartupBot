@@ -52,9 +52,13 @@ async def on_ready():
     else:
         logger.warning("GEMINI_API_KEY not found, AI features will be disabled.")
     
-    # Initialize default categories for new guilds
+    # Initialize default categories and ensure all members are in the DB
     for guild in bot.guilds:
         await init_default_categories(guild.id)
+        for member in guild.members:
+            if not member.bot:
+                await db_manager.ensure_user_exists(member.id, guild.id)
+    logger.info("Finished ensuring all existing members are in the database.")
     
     # Load cogs
     for filename in os.listdir('./cogs'):
@@ -70,6 +74,14 @@ async def on_guild_join(guild):
 
 
 @bot.event
+async def on_member_join(member):
+    """Adds a user to the database when they join a guild."""
+    if not member.bot:
+        await db_manager.ensure_user_exists(member.id, member.guild.id)
+        logger.info(f"Added new member '{member.display_name}' to the database.")
+
+
+@bot.event
 async def on_command_error(ctx, error):
     """Handle command errors"""
     if isinstance(error, commands.CommandNotFound):
@@ -78,6 +90,8 @@ async def on_command_error(ctx, error):
         await ctx.send(f"❌ Missing required argument: {error.param.name}")
     elif isinstance(error, commands.BadArgument):
         await ctx.send(f"❌ Invalid argument provided.")
+    elif isinstance(error, commands.MissingPermissions):
+        await ctx.send("❌ You do not have the required permissions to run this command.")
     else:
         logger.error(f"Unhandled error in command {ctx.command}: {error}")
         await ctx.send("❌ An unexpected error occurred. Please check the logs.")

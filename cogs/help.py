@@ -7,21 +7,52 @@ class HelpCog(commands.Cog, name="Help"):
 
     @commands.command(name='guide')
     async def help_command(self, ctx):
-        """Show help and tutorial information"""
+        """Show a simplified guide to the bot."""
         embed = discord.Embed(
-            title="MLH ELO Bot - Competitive Accountability",
-            description="Transform productivity into a competitive game with peer-reviewed challenges and ELO rankings.",
+            title="MLH ELO Bot - Quick Start Guide",
+            description="Welcome! Let's get you started with your first challenge.",
             color=0x3498db
         )
         
         embed.add_field(
-            name="🎯 Getting Started",
-            value="""1. Check available categories: `!categories`
-2. Issue your first challenge: `!challenge Backend 1200 Build REST API`
-3. Complete and submit proof: `!complete CHL-101 https://github.com/user/repo`
-4. Peers review with: `!approve CHL-101` or `!reject CHL-101`
-5. Climb the leaderboard: `!leaderboard`""",
+            name="Step 1: Find a Challenge Category",
+            value="See what's available to work on.\n`!categories`",
             inline=False
+        )
+
+        embed.add_field(
+            name="Step 2: Issue Your Challenge",
+            value="Pick a category and difficulty (ELO points).\n`!challenge <category> <difficulty> <description>`\n\n**Example:**\n`!challenge Frontend 1100 Create a login form`",
+            inline=False
+        )
+
+        embed.add_field(
+            name="What's Next?",
+            value="Once you're done, submit your work with `!complete <challenge-id> <proof>`.\nYour peers will then review it!",
+            inline=False
+        )
+
+        embed.add_field(
+            name="Explore More Commands",
+            value="""`!challenges` - See active challenges
+`!leaderboard` - Check the rankings
+`!profile` - View your stats
+
+For a full list of all commands, use `!help`.""",
+            inline=False
+        )
+        
+        embed.set_footer(text="Ready to start? Try: !categories")
+        
+        await ctx.send(embed=embed)
+
+    @commands.command(name='help')
+    async def full_help_command(self, ctx):
+        """Show a detailed list of all commands."""
+        embed = discord.Embed(
+            title="MLH ELO Bot - Command Reference",
+            description="Here are all the available commands.",
+            color=0x3498db
         )
         
         embed.add_field(
@@ -74,17 +105,7 @@ Generates bullet-point summaries using Gemini AI with key topics, decisions, and
             inline=False
         )
         
-        embed.add_field(
-            name="🏃 Sprint Cycle",
-            value="""**Weekly Competition:**
-Monday: Issue challenges
-Tue-Sat: Execute work
-Weekend: Submit proof & peer review
-Sunday: ELO updates & new leaderboard""",
-            inline=False
-        )
-        
-        embed.set_footer(text="Ready to start? Try: !categories")
+        embed.set_footer(text="For a quick start, use !guide")
         
         await ctx.send(embed=embed)
 
