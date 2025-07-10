@@ -15,6 +15,116 @@ from typing import Optional, Dict, Any
 
 load_dotenv()
 
+class DifficultyVotingView(discord.ui.View):
+    def __init__(self, challenge_id: str, base_difficulty: int):
+        super().__init__(timeout=300)  # 5 minutes timeout
+        self.challenge_id = challenge_id
+        self.base_difficulty = base_difficulty
+    
+    @discord.ui.button(label='-10 ELO', style=discord.ButtonStyle.red, emoji='⬇️')
+    async def vote_down(self, interaction: discord.Interaction, button: discord.ui.Button):
+        await self.process_vote(interaction, -10)
+    
+    @discord.ui.button(label='+10 ELO', style=discord.ButtonStyle.green, emoji='⬆️')
+    async def vote_up(self, interaction: discord.Interaction, button: discord.ui.Button):
+        await self.process_vote(interaction, 10)
+    
+    @discord.ui.button(label='Finalize Voting', style=discord.ButtonStyle.primary, emoji='✅')
+    async def finalize_voting(self, interaction: discord.Interaction, button: discord.ui.Button):
+        # Check if user has admin permissions
+        if not interaction.user.guild_permissions.administrator:
+            await interaction.response.send_message("❌ Only administrators can finalize voting", ephemeral=True)
+            return
+        
+        await self.finish_voting(interaction)
+    
+    async def process_vote(self, interaction: discord.Interaction, adjustment: int):
+        async with accountability.db_pool.acquire() as conn:
+            # Check if user already voted
+            existing_vote = await conn.fetchrow(
+                'SELECT * FROM difficulty_votes WHERE challenge_id = (SELECT id FROM challenges WHERE challenge_id = $1) AND voter_id = $2',
+                self.challenge_id, interaction.user.id
+            )
+            
+            if existing_vote:
+                await interaction.response.send_message("❌ You have already voted on this challenge's difficulty!", ephemeral=True)
+                return
+            
+            # Get challenge database ID
+            challenge_db_id = await conn.fetchval(
+                'SELECT id FROM challenges WHERE challenge_id = $1',
+                self.challenge_id
+            )
+            
+            if not challenge_db_id:
+                await interaction.response.send_message("❌ Challenge not found", ephemeral=True)
+                return
+            
+            # Record vote
+            await conn.execute(
+                'INSERT INTO difficulty_votes (challenge_id, voter_id, guild_id, vote_adjustment) VALUES ($1, $2, $3, $4)',
+                challenge_db_id, interaction.user.id, interaction.guild.id, adjustment
+            )
+            
+            # Get current vote tally
+            votes = await conn.fetch(
+                'SELECT vote_adjustment FROM difficulty_votes WHERE challenge_id = $1',
+                challenge_db_id
+            )
+            
+            total_adjustment = sum(vote['vote_adjustment'] for vote in votes)
+            final_difficulty = max(100, min(2000, self.base_difficulty + total_adjustment))
+            vote_count = len(votes)
+            
+            # Update embed with current voting status
+            embed = discord.Embed(title="⚖️ Difficulty Voting", color=0x9b59b6)
+            embed.add_field(name="Challenge ID", value=self.challenge_id, inline=True)
+            embed.add_field(name="Base Difficulty", value=f"{self.base_difficulty} ELO", inline=True)
+            embed.add_field(name="Current Adjustment", value=f"{total_adjustment:+d} ELO", inline=True)
+            embed.add_field(name="Projected Final", value=f"{final_difficulty} ELO", inline=True)
+            embed.add_field(name="Total Votes", value=str(vote_count), inline=True)
+            embed.add_field(name="Status", value="🗳️ Voting in progress", inline=True)
+            
+            await interaction.response.edit_message(embed=embed, view=self)
+    
+    async def finish_voting(self, interaction: discord.Interaction):
+        async with accountability.db_pool.acquire() as conn:
+            # Get challenge database ID
+            challenge_db_id = await conn.fetchval(
+                'SELECT id FROM challenges WHERE challenge_id = $1',
+                self.challenge_id
+            )
+            
+            # Calculate final difficulty
+            votes = await conn.fetch(
+                'SELECT vote_adjustment FROM difficulty_votes WHERE challenge_id = $1',
+                challenge_db_id
+            )
+            
+            total_adjustment = sum(vote['vote_adjustment'] for vote in votes) if votes else 0
+            final_difficulty = max(100, min(2000, self.base_difficulty + total_adjustment))
+            
+            # Update challenge status
+            await conn.execute(
+                'UPDATE challenges SET status = $1, final_difficulty_elo = $2, difficulty_voting_active = $3 WHERE challenge_id = $4',
+                'active', final_difficulty, False, self.challenge_id
+            )
+            
+            # Update embed to show finalized result
+            embed = discord.Embed(title="✅ Difficulty Voting Finalized", color=0x27ae60)
+            embed.add_field(name="Challenge ID", value=self.challenge_id, inline=True)
+            embed.add_field(name="Base Difficulty", value=f"{self.base_difficulty} ELO", inline=True)
+            embed.add_field(name="Final Adjustment", value=f"{total_adjustment:+d} ELO", inline=True)
+            embed.add_field(name="Final Difficulty", value=f"{final_difficulty} ELO", inline=True)
+            embed.add_field(name="Total Votes", value=str(len(votes)), inline=True)
+            embed.add_field(name="Status", value="🎯 Challenge now active!", inline=True)
+            
+            # Disable all buttons
+            for item in self.children:
+                item.disabled = True
+            
+            await interaction.response.edit_message(embed=embed, view=self)
+
 # Set up logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -248,7 +358,7 @@ async def list_categories(ctx):
 
 @bot.command(name='challenge')
 async def issue_challenge(ctx, category: str, difficulty: int, *, description: str):
-    """Issue a new challenge"""
+    """Issue a new challenge with difficulty voting"""
     if difficulty < 100 or difficulty > 2000:
         await ctx.send("❌ Difficulty must be between 100 and 2000")
         return
@@ -283,7 +393,7 @@ async def issue_challenge(ctx, category: str, difficulty: int, *, description: s
     
     async with accountability.db_pool.acquire() as conn:
         await conn.execute(
-            '''INSERT INTO challenges (challenge_id, user_id, guild_id, sprint_id, category_id, title, description, difficulty_elo)
+            '''INSERT INTO challenges (challenge_id, user_id, guild_id, sprint_id, category_id, title, description, base_difficulty_elo)
                VALUES ($1, $2, $3, $4, $5, $6, $7, $8)''',
             challenge_id, ctx.author.id, ctx.guild.id, sprint_id, category_id, description, description, difficulty
         )
@@ -294,26 +404,64 @@ async def issue_challenge(ctx, category: str, difficulty: int, *, description: s
             ctx.author.id, ctx.guild.id
         )
     
+    # Send voting message to difficulty voting channel
+    config = await accountability.get_guild_config(ctx.guild.id)
+    voting_channel_id = config.get('difficulty_voting_channel_id')
+    
+    if voting_channel_id:
+        voting_channel = bot.get_channel(voting_channel_id)
+        if voting_channel:
+            embed = discord.Embed(title="⚖️ Difficulty Voting", color=0x9b59b6)
+            embed.add_field(name="Challenge ID", value=challenge_id, inline=True)
+            embed.add_field(name="Category", value=category, inline=True)
+            embed.add_field(name="Base Difficulty", value=f"{difficulty} ELO", inline=True)
+            embed.add_field(name="Description", value=description, inline=False)
+            embed.add_field(name="Challenger", value=ctx.author.mention, inline=True)
+            embed.add_field(name="Voting", value="Use the buttons below to vote on difficulty adjustment:\n-10 ELO | +10 ELO\n\nYou can only vote once!", inline=False)
+            
+            view = DifficultyVotingView(challenge_id, difficulty)
+            voting_message = await voting_channel.send(embed=embed, view=view)
+            
+            # Store voting message ID
+            async with accountability.db_pool.acquire() as conn:
+                await conn.execute(
+                    'UPDATE challenges SET difficulty_voting_message_id = $1 WHERE challenge_id = $2',
+                    voting_message.id, challenge_id
+                )
+    
     embed = discord.Embed(title="🎯 New Challenge Issued!", color=0xe74c3c)
     embed.add_field(name="ID", value=challenge_id, inline=True)
     embed.add_field(name="Category", value=category, inline=True)
-    embed.add_field(name="Difficulty", value=f"{difficulty} ELO", inline=True)
+    embed.add_field(name="Base Difficulty", value=f"{difficulty} ELO", inline=True)
     embed.add_field(name="Description", value=description, inline=False)
     embed.add_field(name="Challenger", value=ctx.author.mention, inline=True)
+    
+    if voting_channel_id:
+        embed.add_field(name="Status", value="⏳ Pending difficulty voting", inline=False)
+    else:
+        embed.add_field(name="Status", value="✅ Active (no voting channel configured)", inline=False)
+        # If no voting channel, activate immediately
+        async with accountability.db_pool.acquire() as conn:
+            await conn.execute(
+                'UPDATE challenges SET status = $1, final_difficulty_elo = $2, difficulty_voting_active = $3 WHERE challenge_id = $4',
+                'active', difficulty, False, challenge_id
+            )
     
     await ctx.send(embed=embed)
 
 @bot.command(name='challenges')
 async def list_challenges(ctx, status: str = "active"):
     """List challenges by status"""
-    valid_statuses = ['active', 'pending_review', 'completed', 'failed', 'rejected']
+    valid_statuses = ['pending_difficulty', 'active', 'pending_review', 'completed', 'failed', 'rejected']
     if status not in valid_statuses:
         await ctx.send(f"❌ Invalid status. Use: {', '.join(valid_statuses)}")
         return
     
     async with accountability.db_pool.acquire() as conn:
         challenges = await conn.fetch(
-            '''SELECT c.challenge_id, c.title, c.difficulty_elo, c.status, c.created_at, 
+            '''SELECT c.challenge_id, c.title, 
+                      COALESCE(c.final_difficulty_elo, c.base_difficulty_elo) as difficulty_elo, 
+                      c.status, c.created_at, 
                       cat.name as category, u.user_id
                FROM challenges c
                JOIN categories cat ON c.category_id = cat.id
@@ -366,9 +514,21 @@ async def submit_completion(ctx, challenge_id: str, *, proof: str):
             await ctx.send(f"❌ Challenge {challenge_id} not found or doesn't belong to you.")
             return
         
-        if challenge['status'] != 'active':
+        if challenge['status'] not in ['active', 'pending_difficulty']:
             await ctx.send(f"❌ Challenge {challenge_id} is not active (status: {challenge['status']})")
             return
+        
+        # If challenge is pending difficulty voting, check if it can be activated
+        if challenge['status'] == 'pending_difficulty':
+            if not challenge['final_difficulty_elo']:
+                await ctx.send(f"❌ Challenge {challenge_id} is still pending difficulty voting. Wait for voting to complete.")
+                return
+            else:
+                # Activate the challenge if voting is complete
+                await conn.execute(
+                    'UPDATE challenges SET status = $1 WHERE challenge_id = $2',
+                    'active', challenge_id
+                )
         
         # Update challenge with proof
         await conn.execute(
@@ -484,8 +644,11 @@ async def finalize_challenge(challenge, final_status: str, conn):
             config['stable_user_threshold']
         )
         
+        # Use final difficulty if available, otherwise base difficulty
+        challenge_difficulty = challenge.get('final_difficulty_elo') or challenge.get('base_difficulty_elo')
+        
         expected_score = ELOEngine.calculate_expected_score(
-            user['current_elo'], challenge['difficulty_elo']
+            user['current_elo'], challenge_difficulty
         )
         
         new_elo = ELOEngine.calculate_new_elo(
@@ -586,7 +749,9 @@ async def user_profile(ctx, user: discord.Member = None):
         
         # Get recent challenges
         recent_challenges = await conn.fetch(
-            '''SELECT c.challenge_id, c.title, c.difficulty_elo, c.status, c.created_at,
+            '''SELECT c.challenge_id, c.title, 
+                      COALESCE(c.final_difficulty_elo, c.base_difficulty_elo) as difficulty_elo, 
+                      c.status, c.created_at,
                       cat.name as category
                FROM challenges c
                JOIN categories cat ON c.category_id = cat.id
@@ -715,6 +880,23 @@ async def guild_config(ctx, action: str = None, key: str = None, value: str = No
         except ValueError:
             await ctx.send("❌ Invalid channel")
     
+    elif action == "channel" and key == "voting" and value:
+        try:
+            channel_id = int(value.strip('<#>'))
+            channel = bot.get_channel(channel_id)
+            if not channel:
+                await ctx.send("❌ Channel not found")
+                return
+                
+            async with accountability.db_pool.acquire() as conn:
+                await conn.execute(
+                    'UPDATE guild_config SET difficulty_voting_channel_id = $1 WHERE guild_id = $2',
+                    channel_id, ctx.guild.id
+                )
+            await ctx.send(f"✅ Set difficulty voting channel to <#{channel_id}>")
+        except ValueError:
+            await ctx.send("❌ Invalid channel")
+    
     elif action == "show":
         config = await accountability.get_guild_config(ctx.guild.id)
         embed = discord.Embed(title="⚙️ Guild Configuration", color=0x95a5a6)
@@ -726,7 +908,7 @@ async def guild_config(ctx, action: str = None, key: str = None, value: str = No
         await ctx.send(embed=embed)
     
     else:
-        await ctx.send("Usage: `!config set <key> <value>` or `!config channel review #channel` or `!config show`")
+        await ctx.send("Usage: `!config set <key> <value>` or `!config channel review #channel` or `!config channel voting #channel` or `!config show`")
 
 async def init_default_categories(guild_id: int):
     """Initialize default categories for a guild"""

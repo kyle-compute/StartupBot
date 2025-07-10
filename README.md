@@ -46,9 +46,10 @@ List all available challenge categories (Backend, Frontend, DevOps, Learning, et
 ```
 !challenge <category> <difficulty> <description>
 ```
-Create a new challenge with difficulty rating (100-2000 ELO)
+Create a new challenge with base difficulty rating (100-2000 ELO)
 - **Example**: `!challenge Backend 1300 Implement JWT authentication with refresh tokens`
 - **Example**: `!challenge Learning 800 Complete React tutorial and build todo app`
+- **Note**: If a voting channel is configured, the community will vote on the final difficulty using +/-10 ELO adjustments
 
 **View Challenges:**
 ```
@@ -56,6 +57,7 @@ Create a new challenge with difficulty rating (100-2000 ELO)
 ```
 List challenges by status (optional parameter)
 - `!challenges` - Show active challenges
+- `!challenges pending_difficulty` - Show challenges awaiting difficulty voting
 - `!challenges pending_review` - Show challenges awaiting peer review
 - `!challenges completed` - Show completed challenges
 - `!challenges failed` - Show failed/rejected challenges
@@ -157,6 +159,11 @@ Configure ELO system parameters:
 Set dedicated channel for challenge reviews
 
 ```
+!config channel voting #channel-name
+```
+Set dedicated channel for difficulty voting (with interactive buttons)
+
+```
 !config show
 ```
 Display current guild configuration
@@ -168,16 +175,24 @@ Display current guild configuration
 - **Expected Score**: Calculated using standard ELO formula based on your rating vs challenge difficulty
 - **Rating Changes**: Higher difficulty challenges = bigger ELO swings
 - **K-Factor**: Determines rating volatility (high for new users, lower for experienced)
+- **Difficulty Voting**: Community votes on challenge difficulty using +/-10 ELO adjustments before challenges become active
 
 ### Strategic Gameplay
 - **Play It Safe**: Take challenges below your ELO for small, consistent gains
 - **Take Risks**: Challenge yourself with high-difficulty tasks for massive ELO boosts (I recommend this one)
 - **Peer Pressure**: Community validates your work, maintaining quality standards
 
+### Difficulty Voting Process
+1. **Challenge Creation**: User sets base difficulty (e.g., 1200 ELO)
+2. **Community Voting**: Others vote to adjust difficulty (+10 or -10 ELO)
+3. **Final Difficulty**: Base + total adjustments (min 100, max 2000 ELO)
+4. **Challenge Activation**: Admin finalizes voting, challenge becomes active
+
 ### Example ELO Scenarios
 - **1000 ELO user** vs **800 difficulty**: Small gain if successful (~15 points)
 - **1000 ELO user** vs **1400 difficulty**: Large gain if successful (~45 points)
 - **1500 ELO user** vs **1200 difficulty**: Minimal gain (~8 points)
+- **Difficulty Voting**: 1200 base + 3 votes (+10, +10, -10) = 1220 final difficulty
 
 ## Deployment Guide
 

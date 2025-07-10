@@ -43,8 +43,11 @@ CREATE TABLE IF NOT EXISTS challenges (
     category_id INTEGER REFERENCES categories(id),
     title TEXT NOT NULL,
     description TEXT,
-    difficulty_elo INTEGER NOT NULL,
-    status VARCHAR(20) DEFAULT 'active', -- active, pending_review, completed, failed, rejected
+    base_difficulty_elo INTEGER NOT NULL,
+    final_difficulty_elo INTEGER, -- computed after voting
+    difficulty_voting_active BOOLEAN DEFAULT TRUE,
+    difficulty_voting_message_id BIGINT,
+    status VARCHAR(20) DEFAULT 'pending_difficulty', -- pending_difficulty, active, pending_review, completed, failed, rejected
     proof_link TEXT,
     proof_description TEXT,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -84,6 +87,7 @@ CREATE TABLE IF NOT EXISTS guild_config (
     k_factor_stable INTEGER DEFAULT 20,
     approvals_needed INTEGER DEFAULT 2,
     review_channel_id BIGINT,
+    difficulty_voting_channel_id BIGINT,
     sprint_duration_days INTEGER DEFAULT 7,
     auto_start_sprints BOOLEAN DEFAULT TRUE,
     stable_user_threshold INTEGER DEFAULT 10, -- challenges needed to be considered stable
@@ -100,6 +104,20 @@ CREATE INDEX IF NOT EXISTS idx_challenges_status ON challenges(status);
 CREATE INDEX IF NOT EXISTS idx_approvals_challenge ON approvals(challenge_id);
 CREATE INDEX IF NOT EXISTS idx_elo_history_user ON elo_history(user_id);
 CREATE INDEX IF NOT EXISTS idx_sprints_guild ON sprints(guild_id);
+
+-- Difficulty voting table - tracks votes on challenge difficulty
+CREATE TABLE IF NOT EXISTS difficulty_votes (
+    id SERIAL PRIMARY KEY,
+    challenge_id INTEGER REFERENCES challenges(id),
+    voter_id BIGINT NOT NULL,
+    guild_id BIGINT NOT NULL,
+    vote_adjustment INTEGER NOT NULL, -- -10, +10
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE(challenge_id, voter_id)
+);
+
+-- Create indexes for difficulty voting
+CREATE INDEX IF NOT EXISTS idx_difficulty_votes_challenge ON difficulty_votes(challenge_id);
 
 -- Insert default categories for new guilds
 INSERT INTO categories (guild_id, name, description) VALUES 
