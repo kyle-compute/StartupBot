@@ -66,6 +66,10 @@ async def on_ready():
             await bot.load_extension(f'cogs.{filename[:-3]}')
             logger.info(f"Loaded cog: {filename}")
 
+    # Sync slash commands
+    await bot.tree.sync()
+    logger.info("Slash commands synced.")
+
 
 @bot.event
 async def on_guild_join(guild):

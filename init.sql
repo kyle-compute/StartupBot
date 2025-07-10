@@ -83,16 +83,23 @@ CREATE TABLE IF NOT EXISTS elo_history (
 -- Guild configuration settings
 CREATE TABLE IF NOT EXISTS guild_config (
     guild_id BIGINT PRIMARY KEY,
-    k_factor_new INTEGER DEFAULT 40,
-    k_factor_stable INTEGER DEFAULT 20,
-    approvals_needed INTEGER DEFAULT 2,
-    review_channel_id BIGINT,
-    difficulty_voting_channel_id BIGINT,
-    sprint_duration_days INTEGER DEFAULT 7,
-    auto_start_sprints BOOLEAN DEFAULT TRUE,
-    stable_user_threshold INTEGER DEFAULT 10, -- challenges needed to be considered stable
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    k_factor_new INT DEFAULT 32,
+    k_factor_stable INT DEFAULT 16,
+    stable_user_threshold INT DEFAULT 10,
+    approvals_needed INT DEFAULT 1,
+    sprint_duration_days INT DEFAULT 7,
+    auto_start_sprints BOOLEAN DEFAULT TRUE
+);
+
+CREATE TABLE IF NOT EXISTS prerequisites (
+    id SERIAL PRIMARY KEY,
+    guild_id BIGINT NOT NULL,
+    channel_id BIGINT NOT NULL,
+    message_id BIGINT NOT NULL,
+    prerequisite_channel_id BIGINT NOT NULL,
+    prerequisite_message_id BIGINT NOT NULL,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT (CURRENT_TIMESTAMP AT TIME ZONE 'UTC'),
+    UNIQUE(guild_id, message_id, prerequisite_message_id)
 );
 
 -- Create indexes for performance

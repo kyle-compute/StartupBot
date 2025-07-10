@@ -9,40 +9,30 @@ class HelpCog(commands.Cog, name="Help"):
     async def help_command(self, ctx):
         """Show a simplified guide to the bot."""
         embed = discord.Embed(
-            title="MLH ELO Bot - Quick Start Guide",
-            description="Welcome! Let's get you started with your first challenge.",
+            title="ELO Bot Quick Start",
+            description="A quick guide to get you started.",
             color=0x3498db
         )
         
         embed.add_field(
-            name="Step 1: Find a Challenge Category",
-            value="See what's available to work on.\n`!categories`",
+            name="1. Issue a Challenge",
+            value="Use `!challenge <category> <difficulty> <desc>`.\nFind categories with `!categories`.",
             inline=False
         )
 
         embed.add_field(
-            name="Step 2: Issue Your Challenge",
-            value="Pick a category and difficulty (ELO points).\n`!challenge <category> <difficulty> <description>`\n\n**Example:**\n`!challenge Frontend 1100 Create a login form`",
+            name="2. Complete & Get Reviewed",
+            value="Submit your work with `!complete <id> <proof>`.\nPeers will review it with `!approve` or `!reject`.",
             inline=False
         )
 
         embed.add_field(
-            name="What's Next?",
-            value="Once you're done, submit your work with `!complete <challenge-id> <proof>`.\nYour peers will then review it!",
-            inline=False
-        )
-
-        embed.add_field(
-            name="Explore More Commands",
-            value="""`!challenges` - See active challenges
-`!leaderboard` - Check the rankings
-`!profile` - View your stats
-
-For a full list of all commands, use `!help`.""",
+            name="3. Track Your Progress",
+            value="See where you stand with `!leaderboard` and `!profile`.",
             inline=False
         )
         
-        embed.set_footer(text="Ready to start? Try: !categories")
+        embed.set_footer(text="For a full list of all commands, use !help")
         
         await ctx.send(embed=embed)
 
@@ -82,6 +72,12 @@ For a full list of all commands, use `!help`.""",
 Generates bullet-point summaries using Gemini AI with key topics, decisions, and action items""",
             inline=False
         )
+
+        embed.add_field(
+            name="🧠 Knowledge Management",
+            value="Right-click any message to access these commands:\n**Add Prerequisite** - Link a message to another.\n**View Prerequisites** - Show the chain of prerequisites.",
+            inline=False
+        )
         
         embed.add_field(
             name="⚙️ Configuration",
@@ -95,19 +91,7 @@ Generates bullet-point summaries using Gemini AI with key topics, decisions, and
 `!sprint start/end` - Manage competition cycles""",
             inline=False
         )
-        
-        embed.add_field(
-            name="🎲 ELO System",
-            value="""**Starting ELO:** 1000 points
-**Strategy:** Higher difficulty = bigger risk/reward
-**Example:** 1000 ELO user vs 1400 difficulty = +45 points if successful
-**Peer Review:** Community validates work quality""",
-            inline=False
-        )
-        
-        embed.set_footer(text="For a quick start, use !guide")
-        
-        await ctx.send(embed=embed)
+
 
 async def setup(bot):
-    await bot.add_cog(HelpCog(bot)) 
+    await bot.add_cog(HelpCog(bot))
