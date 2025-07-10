@@ -1,97 +1,86 @@
 import discord
 from discord.ext import commands
 
-class HelpCog(commands.Cog, name="Help"):
-    def __init__(self, bot):
-        self.bot = bot
+class CustomHelpCommand(commands.HelpCommand):
+    def __init__(self):
+        super().__init__(command_attrs={
+            'help': 'Show this help message',
+            'aliases': ['guide']
+        })
 
-    @commands.command(name='guide')
-    async def help_command(self, ctx):
-        """Show a simplified guide to the bot."""
-        embed = discord.Embed(
-            title="ELO Bot Quick Start",
-            description="A quick guide to get you started.",
-            color=0x3498db
-        )
-        
-        embed.add_field(
-            name="1. Issue a Challenge",
-            value="Use `!challenge <category> <difficulty> <desc>`.\nFind categories with `!categories`.",
-            inline=False
-        )
-
-        embed.add_field(
-            name="2. Complete & Get Reviewed",
-            value="Submit your work with `!complete <id> <proof>`.\nPeers will review it with `!approve` or `!reject`.",
-            inline=False
-        )
-
-        embed.add_field(
-            name="3. Track Your Progress",
-            value="See where you stand with `!leaderboard` and `!profile`.",
-            inline=False
-        )
-        
-        embed.set_footer(text="For a full list of all commands, use !help")
-        
-        await ctx.send(embed=embed)
-
-    @commands.command(name='help')
-    async def full_help_command(self, ctx):
-        """Show a detailed list of all commands."""
+    async def send_bot_help(self, mapping):
+        """This is the main !help command."""
         embed = discord.Embed(
             title="MLH ELO Bot - Command Reference",
-            description="Here are all the available commands.",
+            description="Here are all the available commands. Use `!help <command>` for more info on a specific command.",
+            color=0x3498db
+        )
+
+        for cog, commands in mapping.items():
+            if cog and commands:
+                command_signatures = [f"`{self.get_command_signature(c)}`" for c in commands]
+                if command_signatures:
+                    cog_name = getattr(cog, "qualified_name", "No Category")
+                    embed.add_field(name=f"**{cog_name}**", value="\n".join(command_signatures), inline=False)
+        
+        await self.get_destination().send(embed=embed)
+
+    async def send_command_help(self, command):
+        """This is the !help <command> command."""
+        embed = discord.Embed(
+            title=f"Help: `!{command.name}`",
+            description=command.help or "No description provided.",
+            color=0x3498db
+        )
+        embed.add_field(name="Usage", value=f"`{self.get_command_signature(command)}`")
+        if command.aliases:
+            embed.add_field(name="Aliases", value=", ".join(f"`{alias}`" for alias in command.aliases), inline=False)
+            
+        await self.get_destination().send(embed=embed)
+
+    async def send_group_help(self, group):
+        """This is the !help <group> command."""
+        embed = discord.Embed(
+            title=f"Help: `!{group.name}`",
+            description=group.help or "No description provided.",
+            color=0x3498db
+        )
+        embed.add_field(name="Usage", value=f"`{self.get_command_signature(group)}`")
+        if group.aliases:
+            embed.add_field(name="Aliases", value=", ".join(f"`{alias}`" for alias in group.aliases))
+        
+        subcommand_signatures = [f"`{self.get_command_signature(c)}` - {c.short_doc}" for c in group.commands]
+        if subcommand_signatures:
+            embed.add_field(name="Subcommands", value="\n".join(subcommand_signatures), inline=False)
+
+        await self.get_destination().send(embed=embed)
+
+    async def send_cog_help(self, cog):
+        """This is the !help <CogName> command."""
+        commands = cog.get_commands()
+        if not commands:
+            await self.get_destination().send(f"No commands found in `{cog.qualified_name}`.")
+            return
+
+        embed = discord.Embed(
+            title=f"Help: {cog.qualified_name}",
+            description=cog.description or f"Commands in the {cog.qualified_name} category.",
             color=0x3498db
         )
         
-        embed.add_field(
-            name="🏆 Core Commands",
-            value="""**Challenge Management:**
-`!challenge <category> <difficulty> <description>` - Issue new challenge (100-2000 ELO)
-`!challenges [status]` - List challenges (active/pending/completed)
-`!complete <id> <proof>` - Submit challenge for review
-`!approve <id>` / `!reject <id>` - Vote on submissions""",
-            inline=False
-        )
+        command_signatures = [f"`{self.get_command_signature(c)}` - {c.short_doc}" for c in commands]
+        embed.add_field(name="Commands", value="\n".join(command_signatures), inline=False)
         
-        embed.add_field(
-            name="📊 Stats & Leaderboards",
-            value="""**View Progress:**
-`!leaderboard` or `!lb` - Current sprint rankings
-`!leaderboard alltime` - All-time ELO rankings
-`!profile [@user]` - View detailed user stats
-`!sprint status` - Current sprint information""",
-            inline=False
-        )
-        
-        embed.add_field(
-            name="🤖 AI Features",
-            value="""**Auto-Summarization:**
-`!fromhere` - Reply to any message to summarize from that point onward
-Generates bullet-point summaries using Gemini AI with key topics, decisions, and action items""",
-            inline=False
-        )
+        await self.get_destination().send(embed=embed)
 
-        embed.add_field(
-            name="🧠 Knowledge Management",
-            value="Right-click any message to access these commands:\n**Add Prerequisite** - Link a message to another.\n**View Prerequisites** - Show the chain of prerequisites.",
-            inline=False
-        )
-        
-        embed.add_field(
-            name="⚙️ Configuration",
-            value="""**Categories:**
-`!categories` - List available categories
-`!category add <name> [description]` - Create custom category
-`!category remove <name>` - Remove category (Admin only)
+class HelpCog(commands.Cog, name="Help"):
+    def __init__(self, bot):
+        self._original_help_command = bot.help_command
+        bot.help_command = CustomHelpCommand()
+        bot.help_command.cog = self
 
-**Admin Commands:**
-`!config show` - View server settings
-`!sprint start/end` - Manage competition cycles""",
-            inline=False
-        )
-
+    def cog_unload(self):
+        self.bot.help_command = self._original_help_command
 
 async def setup(bot):
     await bot.add_cog(HelpCog(bot))

@@ -2,7 +2,7 @@
 
 -- Users table - stores ELO ratings and user data
 CREATE TABLE IF NOT EXISTS users (
-    user_id BIGINT PRIMARY KEY,
+    user_id BIGINT NOT NULL,
     guild_id BIGINT NOT NULL,
     current_elo INTEGER DEFAULT 1000,
     k_factor INTEGER DEFAULT 40,
@@ -10,7 +10,7 @@ CREATE TABLE IF NOT EXISTS users (
     completed_challenges INTEGER DEFAULT 0,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    UNIQUE(user_id, guild_id)
+    PRIMARY KEY(user_id, guild_id)
 );
 
 -- Challenge categories defined per guild
