@@ -4,8 +4,11 @@ services:
     build: .
     container_name: accountability-bot
     restart: unless-stopped
+    env_file:
+      - .env
     environment:
       - DISCORD_BOT_TOKEN=${DISCORD_BOT_TOKEN}
+      - GEMINI_API_KEY=${GEMINI_API_KEY}
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
       - DB_HOST=postgres
       - DB_PORT=5432

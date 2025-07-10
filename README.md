@@ -108,6 +108,15 @@ View detailed statistics and performance history
 - `!profile @username` - View another user's profile
 - Shows: Current ELO, completion rate, recent challenges, ELO history
 
+**Auto-Summarization:**
+```
+!fromhere
+```
+Generate AI-powered conversation summaries
+- Reply to any message with `!fromhere` to summarize from that point onward
+- Creates bullet-point summaries using Gemini AI focusing on key topics, decisions, and action items
+- Requires Gemini API key in environment variables (`API_KEY`)
+
 **Sprint Information:**
 ```
 !sprint status
@@ -248,6 +257,9 @@ DB_HOST=postgres
 DB_PORT=5432
 DB_USER=botuser
 DB_NAME=accountability
+
+# Optional: For AI summarization feature (Gemini API)
+API_KEY=your_gemini_api_key_here
 ```
 
 #### Step 4: Deploy Options
