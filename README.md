@@ -122,6 +122,15 @@ Create custom challenge categories for your server
 - **Example**: `!category add "Machine Learning" "AI/ML projects and research"`
 - **Example**: `!category add "Design" "UI/UX design and prototyping work"`
 
+**Remove Categories (Admin Only):**
+```
+!category remove <name>
+!category delete <name>
+```
+Remove a challenge category from your server
+- **Example**: `!category remove "Machine Learning"`
+- **Note**: Cannot remove categories with active or pending challenges
+
 ## Admin Commands
 
 ### Sprint Management

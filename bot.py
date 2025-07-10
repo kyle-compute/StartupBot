@@ -178,8 +178,50 @@ async def category_command(ctx, action: str, *, args: str = None):
                     await ctx.send(f"❌ Category '{name}' already exists!")
                 else:
                     await ctx.send(f"❌ Error creating category: {str(e)}")
+    
+    elif action.lower() == 'remove' or action.lower() == 'delete':
+        # Check admin permissions
+        if not ctx.author.guild_permissions.administrator:
+            await ctx.send("❌ Administrator permissions required to remove categories")
+            return
+        
+        if not args:
+            await ctx.send("Usage: `!category remove <name>`")
+            return
+        
+        category_name = args.strip()
+        
+        async with accountability.db_pool.acquire() as conn:
+            # Check if category exists
+            category = await conn.fetchrow(
+                'SELECT id, name FROM categories WHERE guild_id = $1 AND name = $2',
+                ctx.guild.id, category_name
+            )
+            
+            if not category:
+                await ctx.send(f"❌ Category '{category_name}' not found.")
+                return
+            
+            # Check if category has active challenges
+            active_challenges = await conn.fetchval(
+                'SELECT COUNT(*) FROM challenges WHERE category_id = $1 AND status IN ($2, $3)',
+                category['id'], 'active', 'pending_review'
+            )
+            
+            if active_challenges > 0:
+                await ctx.send(f"❌ Cannot remove category '{category_name}' - it has {active_challenges} active challenges. Complete or reject them first.")
+                return
+            
+            # Remove the category
+            await conn.execute(
+                'DELETE FROM categories WHERE id = $1',
+                category['id']
+            )
+            
+            await ctx.send(f"✅ Category '{category_name}' removed successfully!")
+    
     else:
-        await ctx.send("Usage: `!category add <name> [description]`")
+        await ctx.send("Usage: `!category add <name> [description]` or `!category remove <name>`")
 
 @bot.command(name='categories')
 async def list_categories(ctx):
@@ -799,6 +841,7 @@ async def help_command(ctx):
         value="""**Categories:**
 `!categories` - List available categories
 `!category add <name> [description]` - Create custom category
+`!category remove <name>` - Remove category (Admin only)
 
 **Admin Commands:**
 `!config show` - View server settings
