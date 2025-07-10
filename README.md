@@ -18,68 +18,110 @@ Building alone sucks, many statup accelerators are performative. This provides a
 3. **Proof & Review Phase**: Users submit proof of completion; peers review and vote
 4. **Rating & Leaderboard Phase**: ELO calculations update rankings and leaderboards
 
-## Game Commands
+## Quick Start Guide
 
-### Challenge Management
-```
-!challenge <category> <difficulty> <description>
-```
-Issue a new challenge with custom difficulty (100-2000 ELO)
-- Example: `!challenge Backend 1300 Implement JWT authentication with refresh tokens`
+1. **Get Help**: `!guide` - Shows complete tutorial and command reference
+2. **View Categories**: `!categories` - See available challenge types
+3. **Issue Challenge**: `!challenge Backend 1200 Build REST API with auth`
+4. **Submit Work**: `!complete CHL-101 https://github.com/user/repo/pull/42`
+5. **Review Peers**: `!approve CHL-102` or `!reject CHL-103 needs tests`
+6. **Check Rankings**: `!leaderboard` - See who's leading this week
+7. **View Progress**: `!profile` - Check your stats and ELO history
 
-```
-!challenges [status]
-```
-List active, pending, completed, or failed challenges
-- Example: `!challenges pending_review`
+## Bot Commands
 
+### Getting Started
 ```
-!complete <challenge_id> <proof_link_or_description>
+!guide
 ```
-Submit completed challenge for peer review
-- Example: `!complete CHL-101 https://github.com/user/repo/pull/42`
-
-### Peer Review System
-```
-!approve <challenge_id> [comment]
-```
-Approve a peer's challenge submission
-- Example: `!approve CHL-101 Great implementation, clean code!`
-
-```
-!reject <challenge_id> [reason]
-```
-Reject a challenge submission
-- Example: `!reject CHL-101 Missing test coverage`
-
-### Categories & Configuration
-```
-!category add <name> [description]
-```
-Create custom challenge categories
-- Example: `!category add "Machine Learning" "AI/ML projects and research"`
+Show comprehensive help with tutorial and command reference
 
 ```
 !categories
 ```
-List all available challenge categories
+List all available challenge categories (Backend, Frontend, DevOps, Learning, etc.)
 
-### Leaderboards & Stats
+### Challenge Management
+
+**Issue a Challenge:**
+```
+!challenge <category> <difficulty> <description>
+```
+Create a new challenge with difficulty rating (100-2000 ELO)
+- **Example**: `!challenge Backend 1300 Implement JWT authentication with refresh tokens`
+- **Example**: `!challenge Learning 800 Complete React tutorial and build todo app`
+
+**View Challenges:**
+```
+!challenges [status]
+```
+List challenges by status (optional parameter)
+- `!challenges` - Show active challenges
+- `!challenges pending_review` - Show challenges awaiting peer review
+- `!challenges completed` - Show completed challenges
+- `!challenges failed` - Show failed/rejected challenges
+
+**Submit Completion:**
+```
+!complete <challenge_id> <proof_link_or_description>
+```
+Submit your completed challenge for peer review
+- **Example**: `!complete CHL-101 https://github.com/user/repo/pull/42`
+- **Example**: `!complete CHL-105 Deployed app at https://myapp.vercel.app - added auth, tests passing`
+
+### Peer Review System
+
+**Approve Submissions:**
+```
+!approve <challenge_id> [optional_comment]
+```
+Vote to approve a peer's challenge submission
+- **Example**: `!approve CHL-101`
+- **Example**: `!approve CHL-101 Great implementation, clean code and good tests!`
+
+**Reject Submissions:**
+```
+!reject <challenge_id> [optional_reason]
+```
+Vote to reject a challenge submission
+- **Example**: `!reject CHL-101 Missing test coverage`
+- **Example**: `!reject CHL-105 App doesn't work as described, authentication broken`
+
+### Leaderboards & Statistics
+
+**View Rankings:**
 ```
 !leaderboard [weekly|alltime]
+!lb [weekly|alltime]
 ```
-View current sprint or all-time ELO rankings
-- Aliases: `!lb`, `!lb weekly`, `!lb alltime`
+View ELO rankings and competition standings
+- `!leaderboard` or `!lb` - Current weekly sprint leaderboard
+- `!leaderboard alltime` or `!lb alltime` - All-time ELO rankings
 
+**User Profiles:**
 ```
 !profile [@user]
 ```
-View detailed user stats, ELO history, and recent challenges
+View detailed statistics and performance history
+- `!profile` - View your own profile
+- `!profile @username` - View another user's profile
+- Shows: Current ELO, completion rate, recent challenges, ELO history
 
+**Sprint Information:**
 ```
 !sprint status
 ```
-Check current sprint information and remaining time
+Check current weekly sprint details and time remaining
+
+### Category Management
+
+**Create Categories:**
+```
+!category add <name> [description]
+```
+Create custom challenge categories for your server
+- **Example**: `!category add "Machine Learning" "AI/ML projects and research"`
+- **Example**: `!category add "Design" "UI/UX design and prototyping work"`
 
 ## Admin Commands
 
