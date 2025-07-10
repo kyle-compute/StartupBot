@@ -1,489 +1,138 @@
-# MLH Elobot
+# MLH ELO Bot - Competitive Accountability
 
-Competitive discord bot that gives community to founders who don't have a circle yet.
+This Discord bot transforms team productivity and personal accountability into a competitive game using a peer-reviewed ELO rating system. Users issue challenges, the community votes on their difficulty, and members earn ELO by submitting proof of their completed work. It's designed for developers, founders, and students who want a fun, collaborative way to stay motivated and build in public.
 
-Create a weekly task, peers will vote on the difficulty. (You get to vote too!) 
+![image](https://github.com/user-attachments/assets/81c8159c-735c-4861-829d-48d68407481f)
 
-The more technically challenging a task, the higher your rank will jump when you complete it (with proof, no larps allowed here...)
+## Core Features
 
-## Core Concept
-
-Building alone sucks, many startup accelerators are performative. This provides a unified ecosystem without needing to deal with annoying narratives.
-
-## Weekly Sprint Cycle
-
-1. **Challenge Phase**: Users issue public challenges with custom categories and difficulty ratings
-2. **Execution Phase**: Users work on their challenges throughout the week
-3. **Proof & Review Phase**: Users submit proof of completion; peers review and vote
-4. **Rating & Leaderboard Phase**: ELO calculations update rankings and leaderboards
-
-## Quick Start Guide
-
-1. **Get Help**: `!guide` - Shows complete tutorial and command reference
-2. **View Categories**: `!categories` - See available challenge types
-3. **Issue Challenge**: `!challenge Backend 1200 Build REST API with auth`
-4. **Submit Work**: `!complete CHL-101 https://github.com/user/repo/pull/42`
-5. **Review Peers**: `!approve CHL-102` or `!reject CHL-103 needs tests`
-6. **Check Rankings**: `!leaderboard` - See who's leading this week
-7. **View Progress**: `!profile` - Check your stats and ELO history
-
-## Bot Commands
-
-### Getting Started
-```
-!guide
-```
-Show comprehensive help with tutorial and command reference
-
-```
-!categories
-```
-List all available challenge categories (Backend, Frontend, DevOps, Learning, etc.)
-
-### Challenge Management
-
-**Issue a Challenge:**
-```
-!challenge <category> <difficulty> <description>
-```
-Create a new challenge with base difficulty rating (100-2000 ELO)
-- **Example**: `!challenge Backend 1300 Implement JWT authentication with refresh tokens`
-- **Example**: `!challenge Learning 800 Complete React tutorial and build todo app`
-- **Note**: If a voting channel is configured, the community will vote on the final difficulty using +/-10 ELO adjustments
-
-**View Challenges:**
-```
-!challenges [status]
-```
-List challenges by status (optional parameter)
-- `!challenges` - Show active challenges
-- `!challenges pending_difficulty` - Show challenges awaiting difficulty voting
-- `!challenges pending_review` - Show challenges awaiting peer review
-- `!challenges completed` - Show completed challenges
-- `!challenges failed` - Show failed/rejected challenges
-
-**Submit Completion:**
-```
-!complete <challenge_id> <proof_link_or_description>
-```
-Submit your completed challenge for peer review
-- **Example**: `!complete CHL-101 https://github.com/user/repo/pull/42`
-- **Example**: `!complete CHL-105 Deployed app at https://myapp.vercel.app - added auth, tests passing`
-
-### Peer Review System
-
-**Approve Submissions:**
-```
-!approve <challenge_id> [optional_comment]
-```
-Vote to approve a peer's challenge submission
-- **Example**: `!approve CHL-101`
-- **Example**: `!approve CHL-101 Great implementation, clean code and good tests!`
-
-**Reject Submissions:**
-```
-!reject <challenge_id> [optional_reason]
-```
-Vote to reject a challenge submission
-- **Example**: `!reject CHL-101 Missing test coverage`
-- **Example**: `!reject CHL-105 App doesn't work as described, authentication broken`
-
-### Leaderboards & Statistics
-
-**View Rankings:**
-```
-!leaderboard [weekly|alltime]
-!lb [weekly|alltime]
-```
-View ELO rankings and competition standings
-- `!leaderboard` or `!lb` - Current weekly sprint leaderboard
-- `!leaderboard alltime` or `!lb alltime` - All-time ELO rankings
-
-**User Profiles:**
-```
-!profile [@user]
-```
-View detailed statistics and performance history
-- `!profile` - View your own profile
-- `!profile @username` - View another user's profile
-- Shows: Current ELO, completion rate, recent challenges, ELO history
-
-**Auto-Summarization:**
-```
-!fromhere
-```
-Generate AI-powered conversation summaries
-- Reply to any message with `!fromhere` to summarize from that point onward
-- Creates bullet-point summaries using Gemini AI focusing on key topics, decisions, and action items
-- Requires Gemini API key in environment variables (`API_KEY`)
-
-**Sprint Information:**
-```
-!sprint status
-```
-Check current weekly sprint details and time remaining
-
-### Category Management
-
-**Create Categories:**
-```
-!category add <name> [description]
-```
-Create custom challenge categories for your server
-- **Example**: `!category add "Machine Learning" "AI/ML projects and research"`
-- **Example**: `!category add "Design" "UI/UX design and prototyping work"`
-
-**Remove Categories (Admin Only):**
-```
-!category remove <name>
-!category delete <name>
-```
-Remove a challenge category from your server
-- **Example**: `!category remove "Machine Learning"`
-- **Note**: Cannot remove categories with active or pending challenges
-
-## Admin Commands
-
-### Sprint Management
-```
-!sprint start    # Start new sprint cycle
-!sprint end      # End current sprint
-!sprint status   # Check sprint information
-```
-
-### Configuration
-```
-!config set <key> <value>
-```
-Configure ELO system parameters:
-- `k_factor_new`: K-factor for new users (default: 40)
-- `k_factor_stable`: K-factor for experienced users (default: 20)
-- `approvals_needed`: Votes needed to approve challenges (default: 2)
-- `sprint_duration_days`: Sprint length in days (default: 7)
-- `stable_user_threshold`: Challenges needed to be "stable" (default: 10)
-
-```
-!config channel review #channel-name
-```
-Set dedicated channel for challenge reviews
-
-```
-!config channel voting #channel-name
-```
-Set dedicated channel for difficulty voting (with interactive buttons)
-
-```
-!config show
-```
-Display current guild configuration
-
-## ELO System
-
-### How It Works
-- **Starting ELO**: 1000 for all new users
-- **Expected Score**: Calculated using standard ELO formula based on your rating vs challenge difficulty
-- **Rating Changes**: Higher difficulty challenges = bigger ELO swings
-- **K-Factor**: Determines rating volatility (high for new users, lower for experienced)
-- **Difficulty Voting**: Community votes on challenge difficulty using +/-10 ELO adjustments before challenges become active
-
-### Strategic Gameplay
-- **Play It Safe**: Take challenges below your ELO for small, consistent gains
-- **Take Risks**: Challenge yourself with high-difficulty tasks for massive ELO boosts (I recommend this one)
-- **Peer Pressure**: Community validates your work, maintaining quality standards
-
-### Difficulty Voting Process
-1. **Challenge Creation**: User sets base difficulty (e.g., 1200 ELO)
-2. **Community Voting**: Others vote to adjust difficulty (+10 or -10 ELO)
-3. **Final Difficulty**: Base + total adjustments (min 100, max 2000 ELO)
-4. **Challenge Activation**: Admin finalizes voting, challenge becomes active
-
-### Example ELO Scenarios
-- **1000 ELO user** vs **800 difficulty**: Small gain if successful (~15 points)
-- **1000 ELO user** vs **1400 difficulty**: Large gain if successful (~45 points)
-- **1500 ELO user** vs **1200 difficulty**: Minimal gain (~8 points)
-- **Difficulty Voting**: 1200 base + 3 votes (+10, +10, -10) = 1220 final difficulty
-
-## Deployment Guide
-
-### Prerequisites
-1. Discord Developer Account
-2. Docker and Docker Compose installed
-3. Server with internet access (local machine, VPS, or cloud instance)
-
-### Step-by-Step Deployment
-
-#### Step 1: Create Discord Bot
-1. Go to https://discord.com/developers/applications
-2. Click "New Application" and give it a name
-3. Navigate to "Bot" section in the left sidebar
-4. Click "Add Bot"
-5. Copy the bot token (keep this secure)
-6. Under "Privileged Gateway Intents", enable:
-   - Message Content Intent
-   - Server Members Intent (optional)
-
-#### Step 2: Set Bot Permissions
-1. Go to "OAuth2" > "URL Generator"
-2. Select "bot" scope
-3. Select these bot permissions:
-   - Send Messages
-   - Read Message History
-   - Use Slash Commands
-   - Embed Links
-   - Add Reactions
-   - Manage Messages (optional)
-4. Copy the generated URL and use it to invite the bot to your Discord server
-
-#### Step 3: Download and Configure
-```bash
-# Clone or download the bot files
-git clone https://github.com/kyle-compute/StartupBot.git
-cd StartupBot
-
-# Create environment file
-cp .env.example .env
-
-# Edit .env file with your bot token
-nano .env
-```
-
-Add your Discord bot token to the .env file:
-```env
-DISCORD_BOT_TOKEN=your_bot_token_here
-POSTGRES_PASSWORD=choose_a_secure_password
-
-# Database Configuration (use these exact values)
-DB_HOST=postgres
-DB_PORT=5432
-DB_USER=botuser
-DB_NAME=accountability
-
-# Optional: For AI summarization feature (Gemini API)
-API_KEY=your_gemini_api_key_here
-```
-
-#### Step 4: Deploy Options
-
-**Option A: Local Deployment**
-```bash
-# Start the bot and database
-docker-compose up -d
-
-# Check if running
-docker-compose ps
-
-# View logs
-docker-compose logs -f discord-bot
-```
-
-**Option B: VPS/Cloud Deployment**
-```bash
-# On your server (Ubuntu/Debian)
-sudo apt update && sudo apt install docker.io docker-compose git
-
-# Clone and deploy
-git clone https://github.com/kyle-compute/StartupBot.git /opt/discord-bot
-cd /opt/discord-bot
-cp .env.example .env
-nano .env  # Add your bot token and secure password
-
-# Start services
-docker-compose up -d
-
-# Optional: Set up systemd service for auto-restart
-sudo systemctl enable docker
-```
-
-**Option C: Digital Ocean (Automated)**
-```bash
-# Configure deployment script
-nano deploy.sh
-# Set DROPLET_IP to your server's IP address
-
-# Run deployment
-chmod +x deploy.sh
-./deploy.sh
-```
-
-#### Step 5: Verify Deployment
-1. Check bot is online in Discord (green status)
-2. Test basic command: `!guide`
-3. Create a test challenge: `!challenge Testing 1000 Test challenge`
-4. Check logs: `docker-compose logs discord-bot`
-
-### Network Configuration
-
-**Local Hosting:**
-- Bot runs on localhost, no port forwarding needed
-- Discord connects to your bot via Discord's API
-- Database runs internally in Docker network
-
-**VPS/Cloud Hosting:**
-- Ensure ports 80/443 are open for web traffic (optional)
-- Docker handles internal networking
-- No special firewall configuration needed for Discord bot
-
-### Troubleshooting
-
-**Bot not responding:**
-```bash
-# Check if containers are running
-docker-compose ps
-
-# Check bot logs
-docker-compose logs discord-bot
-
-# Verify token in .env file
-cat .env | grep DISCORD_BOT_TOKEN
-```
-
-**Database connection errors:**
-```bash
-# Check PostgreSQL logs
-docker-compose logs postgres
-
-# Verify database password
-cat .env | grep POSTGRES_PASSWORD
-
-# Clean restart if needed
-docker-compose down -v
-docker-compose up -d
-```
-
-**Permission errors:**
-- Verify bot has required permissions in Discord server
-- Check OAuth2 URL generator settings
-- Ensure bot role is above users it needs to interact with
-
-**Environment Variable Issues:**
-- Database credentials must match between `.env` and `docker-compose.yml`
-- Use exactly: `DB_USER=botuser` (not postgres)
-- Rebuild containers after changing `.env`: `docker-compose up --build -d`
-
-### Maintenance Commands
-
-```bash
-# Update bot
-git pull && docker-compose up --build -d
-
-# Restart services
-docker-compose restart
-
-# Clean restart (resets database)
-docker-compose down -v && docker-compose up -d
-
-# View database
-docker-compose exec postgres psql -U botuser -d accountability
-
-# Backup database
-docker-compose exec postgres pg_dump -U botuser accountability > backup.sql
-
-# View real-time logs
-docker-compose logs -f
-```
-
-### Security Notes
-
-- Keep your Discord bot token secure and never commit it to version control
-- Use a strong database password
-- Regularly update the bot and dependencies
-- Monitor logs for unusual activity
-- Consider using environment variable management tools for production
-
-### System Requirements
-
-**Minimum:**
-- 1 CPU core
-- 512MB RAM
-- 5GB storage
-- Docker support
-
-**Recommended:**
-- 2 CPU cores
-- 1GB RAM
-- 10GB storage
-- SSD storage for database performance
-
-### Default Categories
-
-The bot comes with these pre-configured challenge categories:
-- **Backend**: Server-side development, databases, APIs
-- **Frontend**: User interface, web development, mobile apps
-- **DevOps**: Infrastructure, deployment, monitoring
-- **Learning**: Acquiring new skills, studying, research
-- **Refactoring**: Code improvement, optimization, cleanup
-- **Testing**: Writing tests, debugging, quality assurance
-
-## Database Schema
-
-### Core Tables
-- **users**: ELO ratings, challenge statistics
-- **categories**: Guild-specific challenge categories  
-- **challenges**: Challenge details, status, proof
-- **sprints**: Weekly competition cycles
-- **approvals**: Peer review votes
-- **elo_history**: Rating change history
-- **guild_config**: Server-specific settings
-
-## Development
-
-### Local Development
-```bash
-# Install Python dependencies
-pip install -r requirements.txt
-
-# Run without Docker (requires PostgreSQL)
-python bot.py
-
-# Run with Docker
-docker-compose up --build
-```
-
-### Adding Features
-1. Update database schema in `init.sql`
-2. Add command functions to `bot.py`
-3. Test locally with `docker-compose up`
-4. Deploy with your chosen method
-
-## Game Theory & Strategy
-
-### Optimal Strategies
-- **New Players**: Take moderate challenges to establish baseline
-- **Experienced Players**: Mix safe and risky challenges
-- **Teams**: Coordinate challenges for maximum collective gain
-- **Reviewers**: Build reputation through fair, constructive reviews
-
-### Emergent Behaviors
-- **Difficulty Inflation**: Community standards evolve over time
-- **Specialization**: Users become experts in specific categories
-- **Mentorship**: Experienced players guide newcomers
-- **Meta-Gaming**: Strategies around sprint timing and peer relationships
-
-## Success Metrics
-
-### Individual Success
-- Consistent ELO growth over time
-- High challenge completion rate
-- Positive peer review feedback
-- Leadership in specific categories
-
-### Community Success
-- Active participation in reviews
-- Quality of submitted work
-- Healthy competition without toxicity
-- Knowledge sharing and mentorship
-
-## Contributing
-
-1. Fork the repository
-2. Create a feature branch
-3. Test thoroughly
-4. Submit a pull request
-
-## License
-
-MIT License - Feel free to fork and customize for your community!
+- **ELO-Based Task Rating**: Assign a difficulty (100-2000 ELO) to each challenge.
+- **Community-Driven Difficulty Voting**: Peers can vote to adjust the ELO of a challenge before it starts.
+- **Proof of Work & Peer Review**: Users submit proof of completion, and peers approve or reject it.
+- **Weekly Sprints**: Compete on a weekly leaderboard for ELO gains.
+- **AI-Powered Summaries**: Use the `!fromhere` command to get Gemini-powered summaries of your conversations.
+- **Flexible & Configurable**: Admins can customize categories, ELO parameters, and dedicated channels.
 
 ---
 
-Transform your Discord community into a competitive productivity powerhouse where founders can build, prove their work, and climb the leaderboard together!
+## 🚀 Getting Started with Docker
+
+The easiest way to get the bot running is with Docker Compose.
+
+### 1. Prerequisites
+
+- [Docker](https://docs.docker.com/get-docker/) and [Docker Compose](https://docs.docker.com/compose/install/) installed.
+- A Discord Bot Token. You can get one from the [Discord Developer Portal](https://discord.com/developers/applications).
+- A Gemini API Key from [Google AI Studio](https://aistudio.google.com/app/apikey) for the `!fromhere` command.
+
+### 2. Configuration
+
+**Create an Environment File:**  
+Create a file named `.env` in the root of the project directory. This file will store your secret keys.
+
+```env
+# .env
+
+# Your Discord bot token from the developer portal
+DISCORD_BOT_TOKEN=your_discord_bot_token_here
+
+# Your Gemini API key for AI features
+GEMINI_API_KEY=your_gemini_api_key_here
+
+# Secure password for the PostgreSQL database user
+POSTGRES_PASSWORD=a_very_strong_and_secret_password
+```
+
+### 3. Running the Bot
+
+Once your `.env` file is configured, you can start the bot and the database with a single command:
+
+```bash
+docker-compose up --build -d
+```
+
+- `--build` rebuilds the image if there are any changes to the `Dockerfile`.
+- `-d` runs the containers in detached mode (in the background).
+
+To view the logs for the bot container:
+
+```bash
+docker-compose logs -f discord-bot
+```
+
+### 4. Stopping the Services
+
+To stop the bot and database containers:
+
+```bash
+docker-compose down
+```
+
+---
+
+## 🤖 Bot Commands
+
+### Getting Started
+
+-   `!guide` - Shows a comprehensive tutorial and command reference.
+-   `!categories` - Lists all available challenge categories.
+
+### Challenge Management
+
+-   `!challenge <category> <difficulty> <description>` - Issues a new challenge (e.g., `!challenge Backend 1200 Build REST API`).
+-   `!challenges [status]` - Lists challenges by status (active, pending\_review, completed, etc.).
+-   `!complete <id> <proof>` - Submits a challenge for review with a link or description.
+-   `!approve <id> [comment]` - Approves a peer's submission.
+-   `!reject <id> [reason]` - Rejects a peer's submission.
+
+### AI Features
+
+-   `!fromhere` - (As a reply to a message) Generates an AI summary of the conversation from that point onward.
+
+### Stats & Leaderboards
+
+-   `!leaderboard` or `!lb` - Shows the weekly sprint leaderboard.
+-   `!leaderboard alltime` - Shows the all-time ELO rankings.
+-   `!profile [@user]` - Shows detailed stats for you or another user.
+-   `!sprint status` - Displays the current sprint's status and time remaining.
+
+### Admin Commands
+
+-   `!category add <name> [desc]` - Creates a new challenge category.
+-   `!category remove <name>` - Deletes a category.
+-   `!sprint start|end` - Manually starts or ends a sprint cycle.
+-   `!config show` - Displays all server configurations.
+-   `!config set <key> <value>` - Sets a configuration value (e.g., `approvals_needed`).
+-   `!config channel <review|voting> #channel` - Sets the dedicated channels for reviews and voting.
+
+---
+
+## 📂 Project Structure
+
+This bot is organized into a modular structure using Discord.py Cogs for better readability and maintainability.
+
+```
+.
+├── 📄 .env                  # Environment variables (you create this)
+├── 📄 bot.py                 # Main bot entry point, loads cogs and handles events
+├── 📄 docker-compose.yml      # Defines services, networks, and volumes for Docker
+├── 📄 Dockerfile              # Instructions to build the bot's Docker image
+├── 📄 init.sql                # Initial database schema
+├── 📄 requirements.txt        # Python dependencies
+├── 📁 cogs/                   # Houses all command modules (cogs)
+│   ├── 📄 ai.py
+│   ├── 📄 categories.py
+│   └── ... (and so on)
+└── 📁 utils/                  # Shared utilities
+    ├── 📄 db.py               # Database manager
+    ├── 📄 elo.py              # ELO calculation engine
+    └── 📄 ui.py               # Discord UI elements (e.g., buttons, views)
+```
+
+## ELO System Explained
+
+-   **Starting ELO**: All users begin at 1000.
+-   **Risk vs. Reward**: Higher difficulty challenges offer greater ELO gains but also greater losses.
+-   **K-Factor**: A dynamic value that determines the volatility of ELO changes. It's higher for new users to help them find their rank faster and lower for established users.
+-   **Peer Review**: The community validates work, ensuring quality and preventing gaming the system.
+-   **Difficulty Voting**: Before a challenge is finalized, the community can vote to adjust its difficulty rating, ensuring a fair assessment. 
