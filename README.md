@@ -6,10 +6,9 @@ Create a weekly task, peers will vote on the difficulty. (You get to vote too!)
 
 The more technically challenging a task, the higher your rank will jump when you complete it (with proof, no larps allowed here...)
 
-
 ## Core Concept
 
-Building alone sucks, many statup accelerators are performative. This provides a unified ecosystem without needing to deal with annoying narratives.
+Building alone sucks, many startup accelerators are performative. This provides a unified ecosystem without needing to deal with annoying narratives.
 
 ## Weekly Sprint Cycle
 
@@ -163,7 +162,7 @@ Display current guild configuration
 
 ### Strategic Gameplay
 - **Play It Safe**: Take challenges below your ELO for small, consistent gains
-- **Take Risks**: Challenge yourself with high-difficulty tasks for massive ELO boosts (I reccomend this one)
+- **Take Risks**: Challenge yourself with high-difficulty tasks for massive ELO boosts (I recommend this one)
 - **Peer Pressure**: Community validates your work, maintaining quality standards
 
 ### Example ELO Scenarios
@@ -205,8 +204,8 @@ Display current guild configuration
 #### Step 3: Download and Configure
 ```bash
 # Clone or download the bot files
-git clone <repository-url>
-cd discordbot
+git clone https://github.com/kyle-compute/StartupBot.git
+cd StartupBot
 
 # Create environment file
 cp .env.example .env
@@ -219,6 +218,12 @@ Add your Discord bot token to the .env file:
 ```env
 DISCORD_BOT_TOKEN=your_bot_token_here
 POSTGRES_PASSWORD=choose_a_secure_password
+
+# Database Configuration (use these exact values)
+DB_HOST=postgres
+DB_PORT=5432
+DB_USER=botuser
+DB_NAME=accountability
 ```
 
 #### Step 4: Deploy Options
@@ -241,18 +246,16 @@ docker-compose logs -f discord-bot
 sudo apt update && sudo apt install docker.io docker-compose git
 
 # Clone and deploy
-git clone <repository-url> /opt/discord-bot
+git clone https://github.com/kyle-compute/StartupBot.git /opt/discord-bot
 cd /opt/discord-bot
 cp .env.example .env
-nano .env  # Add your bot token
+nano .env  # Add your bot token and secure password
 
 # Start services
 docker-compose up -d
 
 # Optional: Set up systemd service for auto-restart
-sudo cp discord-bot.service /etc/systemd/system/
-sudo systemctl enable discord-bot
-sudo systemctl start discord-bot
+sudo systemctl enable docker
 ```
 
 **Option C: Digital Ocean (Automated)**
@@ -268,7 +271,7 @@ chmod +x deploy.sh
 
 #### Step 5: Verify Deployment
 1. Check bot is online in Discord (green status)
-2. Test basic command: `!categories`
+2. Test basic command: `!guide`
 3. Create a test challenge: `!challenge Testing 1000 Test challenge`
 4. Check logs: `docker-compose logs discord-bot`
 
@@ -283,25 +286,6 @@ chmod +x deploy.sh
 - Ensure ports 80/443 are open for web traffic (optional)
 - Docker handles internal networking
 - No special firewall configuration needed for Discord bot
-
-### Maintenance Commands
-
-```bash
-# Update bot
-git pull && docker-compose up --build -d
-
-# Restart services
-docker-compose restart
-
-# View database
-docker-compose exec postgres psql -U botuser -d accountability
-
-# Backup database
-docker-compose exec postgres pg_dump -U botuser accountability > backup.sql
-
-# View real-time logs
-docker-compose logs -f
-```
 
 ### Troubleshooting
 
@@ -324,12 +308,43 @@ docker-compose logs postgres
 
 # Verify database password
 cat .env | grep POSTGRES_PASSWORD
+
+# Clean restart if needed
+docker-compose down -v
+docker-compose up -d
 ```
 
 **Permission errors:**
 - Verify bot has required permissions in Discord server
 - Check OAuth2 URL generator settings
 - Ensure bot role is above users it needs to interact with
+
+**Environment Variable Issues:**
+- Database credentials must match between `.env` and `docker-compose.yml`
+- Use exactly: `DB_USER=botuser` (not postgres)
+- Rebuild containers after changing `.env`: `docker-compose up --build -d`
+
+### Maintenance Commands
+
+```bash
+# Update bot
+git pull && docker-compose up --build -d
+
+# Restart services
+docker-compose restart
+
+# Clean restart (resets database)
+docker-compose down -v && docker-compose up -d
+
+# View database
+docker-compose exec postgres psql -U botuser -d accountability
+
+# Backup database
+docker-compose exec postgres pg_dump -U botuser accountability > backup.sql
+
+# View real-time logs
+docker-compose logs -f
+```
 
 ### Security Notes
 
@@ -394,6 +409,34 @@ docker-compose up --build
 3. Test locally with `docker-compose up`
 4. Deploy with your chosen method
 
+## Game Theory & Strategy
+
+### Optimal Strategies
+- **New Players**: Take moderate challenges to establish baseline
+- **Experienced Players**: Mix safe and risky challenges
+- **Teams**: Coordinate challenges for maximum collective gain
+- **Reviewers**: Build reputation through fair, constructive reviews
+
+### Emergent Behaviors
+- **Difficulty Inflation**: Community standards evolve over time
+- **Specialization**: Users become experts in specific categories
+- **Mentorship**: Experienced players guide newcomers
+- **Meta-Gaming**: Strategies around sprint timing and peer relationships
+
+## Success Metrics
+
+### Individual Success
+- Consistent ELO growth over time
+- High challenge completion rate
+- Positive peer review feedback
+- Leadership in specific categories
+
+### Community Success
+- Active participation in reviews
+- Quality of submitted work
+- Healthy competition without toxicity
+- Knowledge sharing and mentorship
+
 ## Contributing
 
 1. Fork the repository
@@ -404,3 +447,7 @@ docker-compose up --build
 ## License
 
 MIT License - Feel free to fork and customize for your community!
+
+---
+
+Transform your Discord community into a competitive productivity powerhouse where founders can build, prove their work, and climb the leaderboard together!
