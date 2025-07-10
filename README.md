@@ -1,13 +1,18 @@
 # ELO Accountability Bot
 
-This Discord bot provides a framework for competitive accountability. Users can issue challenges, complete them for ELO points, and climb a leaderboard. It's designed to turn personal goals and team tasks into a motivating, peer-reviewed game.
+Standard startup ecosystem is cringe and performative, this bot helps you engage in friendly competition with friends. 
 
-The system includes AI-powered conversation summarization and a unique prerequisite system for tracking dependent tasks or discussions.
 
 ## Core Concepts
 
 ### ELO Rating System
-Inspired by the ELO rating system used in chess, every user has a rating that changes based on the outcomes of their challenges. Completing a difficult challenge against a higher-rated user will yield more points than an easier one. This system ensures that the leaderboard reflects not just participation, but skill and consistency.
+
+There's an ELO rating system
+
+Essentially you use a command (In this case) `!challenge <category> <difficulty> <description>`
+After you finish said challenge (With proof), your ELO increases and vice versa.
+
+A leaderboard system is in place 
 
 ### Challenges
 A challenge is a task defined by a user, assigned a category, and given a base difficulty rating. Other users can vote to adjust the difficulty before it becomes active. Once a challenge is completed, the user submits it for peer review.
